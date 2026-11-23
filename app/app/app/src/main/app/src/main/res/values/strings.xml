@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NetLatch</string>
+    <string name="start">Activar túnel</string>
+    <string name="stop">Desactivar túnel</string>
+    <string name="lag">Fake lag</string>
+    <string name="auto">Automático</string>
+    <string name="bidi">Cortar también la entrada</string>
+    <string name="profile">Intensidad</string>
+    <string name="p0">Suave 250-400</string>
+    <string name="p1">Medio 400-600</string>
+    <string name="p2">Agresivo 600-800</string>
+    <string name="log">Registro</string>
+</resources>
