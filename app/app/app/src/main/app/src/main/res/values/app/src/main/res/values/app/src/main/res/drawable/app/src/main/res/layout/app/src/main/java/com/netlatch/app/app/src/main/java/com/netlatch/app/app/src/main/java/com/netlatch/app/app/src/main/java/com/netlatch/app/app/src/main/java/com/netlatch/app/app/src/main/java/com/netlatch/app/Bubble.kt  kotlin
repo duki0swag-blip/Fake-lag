@@ -1,0 +1,154 @@
+package com.netlatch.app
+
+import android.content.Context
+import android.graphics.Color
+import android.graphics.PixelFormat
+import android.graphics.drawable.GradientDrawable
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import android.view.Gravity
+import android.view.MotionEvent
+import android.view.WindowManager
+import android.widget.TextView
+import kotlin.math.abs
+
+/**
+ * Burbuja flotante. Toque = disparar lag, mantener pulsado = ocultar.
+ * No toma foco (FLAG_NOT_FOCUSABLE) para no robarle el input al juego.
+ */
+class Bubble(
+    private val ctx: Context,
+    private val onTap: () -> Unit,
+    private val onHide: () -> Unit
+) {
+
+    private val main = Handler(Looper.getMainLooper())
+    private val wm = ctx.getSystemService(WindowManager::class.java)
+    private val bg = GradientDrawable()
+
+    private var view: TextView? = null
+    private var active = false
+
+    private fun dp(v: Int) = (v * ctx.resources.displayMetrics.density).toInt()
+
+    fun canShow(): Boolean = Settings.canDrawOverlays(ctx)
+
+    fun show() {
+        if (view != null || !canShow()) return
+        main.post {
+            val v = TextView(ctx).apply {
+                text = "LAG"
+                setTextColor(Color.WHITE)
+                textSize = 11f
+                gravity = Gravity.CENTER
+                bg.cornerRadius = dp(28).toFloat()
+                bg.setColor(if (active) RED else GREEN)
+                background = bg
+            }
+            val p = WindowManager.LayoutParams(
+                dp(56), dp(56),
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = ctx.resources.displayMetrics.widthPixels - dp(76)
+                y = dp(140)
+            }
+
+            var downX = 0f
+            var downY = 0f
+            var startX = 0
+            var startY = 0
+            var moved = false
+            var fired = false
+
+            val longPress = Runnable {
+                if (!moved) {
+                    fired = true
+                    v.alpha = 1f
+                    onHide()
+                }
+            }
+
+            v.setOnTouchListener { _, e ->
+                when (e.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        downX = e.rawX
+                        downY = e.rawY
+                        startX = p.x
+                        startY = p.y
+                        moved = false
+                        fired = false
+                        v.alpha = 0.75f
+                        main.postDelayed(longPress, 550)
+                        true
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        val dx = (e.rawX - downX).toInt()
+                        val dy = (e.rawY - downY).toInt()
+                        if (!moved && (abs(dx) > dp(6) || abs(dy) > dp(6))) {
+                            moved = true
+                            main.removeCallbacks(longPress)
+                        }
+                        if (moved) {
+                            p.x = startX + dx
+                            p.y = startY + dy
+                            try {
+                                wm.updateViewLayout(v, p)
+                            } catch (_: Exception) {
+                            }
+                        }
+                        true
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        main.removeCallbacks(longPress)
+                        v.alpha = 1f
+                        if (!moved && !fired) onTap()
+                        true
+                    }
+                    MotionEvent.ACTION_CANCEL -> {
+                        main.removeCallbacks(longPress)
+                        v.alpha = 1f
+                        true
+                    }
+                    else -> false
+                }
+            }
+
+            try {
+                wm.addView(v, p)
+                view = v
+            } catch (_: Exception) {
+                LogBus.add("no se pudo mostrar la burbuja")
+            }
+        }
+    }
+
+    fun hide() {
+        main.post {
+            view?.let {
+                try {
+                    wm.removeView(it)
+                } catch (_: Exception) {
+                }
+            }
+            view = null
+        }
+    }
+
+    fun setActive(a: Boolean) {
+        active = a
+        main.post {
+            bg.setColor(if (a) RED else GREEN)
+            view?.invalidate()
+        }
+    }
+
+    private companion object {
+        const val RED = 0xFFE5484D.toInt()
+        const val GREEN = 0xFF1E9E6A.toInt()
+    }
+}
