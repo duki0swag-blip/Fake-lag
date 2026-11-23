@@ -1,0 +1,26 @@
+package com.netlatch.app
+
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+object LogBus {
+    private val fmt = SimpleDateFormat("HH:mm:ss", Locale.US)
+    private val lines = ArrayList<String>()
+    private var listener: ((String) -> Unit)? = null
+
+    fun setListener(l: ((String) -> Unit)?) {
+        listener = l
+    }
+
+    fun add(msg: String) {
+        val line = "${fmt.format(Date())}  $msg"
+        synchronized(lines) {
+            lines.add(line)
+            if (lines.size > 200) lines.removeAt(0)
+        }
+        listener?.invoke(line)
+    }
+
+    fun snapshot(): String = synchronized(lines) { lines.joinToString("\n") }
+}2
