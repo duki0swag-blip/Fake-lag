@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#10131A"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Túnel inactivo"
+            android:textColor="#8A93A5"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/toggleVpn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/start" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/lag"
+            android:textColor="#E6EAF2"
+            android:textSize="16sp" />
+
+        <Switch
+            android:id="@+id/lagSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:enabled="false"
+            android:text="Cortar tráfico del juego" />
+
+        <Switch
+            android:id="@+id/autoSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/auto" />
+
+        <Switch
+            android:id="@+id/bidiSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/bidi" />
+
+        <Button
+            android:id="@+id/bubbleBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Burbuja flotante" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/profile"
+            android:textColor="#E6EAF2"
+            android:textSize="16sp" />
+
+        <RadioGroup
+            android:id="@+id/profiles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RadioButton android:id="@+id/p0" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/p0" />
+            <RadioButton android:id="@+id/p1" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/p1" />
+            <RadioButton android:id="@+id/p2" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/p2" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/log"
+            android:textColor="#E6EAF2"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/logView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="monospace"
+            android:textColor="#5EE1A6"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+</ScrollView>
