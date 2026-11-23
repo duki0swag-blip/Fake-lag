@@ -1,0 +1,91 @@
+package com.netlatch.app
+
+import android.content.Context
+import android.content.pm.PackageManager
+import java.io.File
+
+/**
+ * Localiza los endpoints del servidor del juego leyendo /proc/net/udp por UID.
+ * Sin root. Si /proc no es legible, el servicio usa el fallback por puerto.
+ */
+class EndpointTracker(private val ctx: Context) {
+
+    private val uids = ArrayList<Int>()
+    val endpoints = HashSet<String>()
+
+    @Volatile
+    var ready = false
+
+    fun load() {
+        val pm = ctx.packageManager
+        for (pkg in PACKAGES) {
+            try {
+                uids.add(pm.getApplicationInfo(pkg, 0).uid)
+            } catch (_: PackageManager.NameNotFoundException) {
+            }
+        }
+        ready = uids.isNotEmpty()
+        if (!ready) LogBus.add("juego no instalado o no visible")
+    }
+
+    fun refresh() {
+        if (uids.isEmpty()) return
+        val found = HashSet<String>()
+        for (path in arrayOf("/proc/net/udp", "/proc/net/udp6")) {
+            val f = File(path)
+            if (!f.canRead()) continue
+            try {
+                f.useLines { seq ->
+                    seq.drop(1).forEach { line ->
+                        val c = line.trim().split(Regex("\\s+"))
+                        if (c.size < 8) return@forEach
+                        val uid = c[7].toIntOrNull() ?: return@forEach
+                        if (uid !in uids) return@forEach
+                        val remote = c[2]
+                        val i = remote.indexOf(':')
+                        if (i <= 0) return@forEach
+                        val port = remote.substring(i + 1).toIntOrNull(16) ?: return@forEach
+                        if (port == 0) return@forEach
+                        val ip = hexIp(remote.substring(0, i)) ?: return@forEach
+                        found.add("$ip:$port")
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+        synchronized(endpoints) {
+            endpoints.clear()
+            endpoints.addAll(found)
+        }
+    }
+
+    private fun hexIp(h: String): String? {
+        try {
+            if (h.length == 8) {
+                val b = ByteArray(4)
+                for (i in 0 until 4) {
+                    b[i] = h.substring((3 - i) * 2, (3 - i) * 2 + 2).toInt(16).toByte()
+                }
+                return "${b[0].toInt() and 0xFF}.${b[1].toInt() and 0xFF}." +
+                    "${b[2].toInt() and 0xFF}.${b[3].toInt() and 0xFF}"
+            }
+            if (h.length == 32) {
+                val sb = StringBuilder()
+                for (w in 0 until 4) {
+                    for (j in 0 until 4) {
+                        val hex = h.substring(w * 8 + (3 - j) * 2, w * 8 + (3 - j) * 2 + 2)
+                        if (sb.isNotEmpty()) sb.append(':')
+                        sb.append(hex.padStart(4, '0'))
+                    }
+                }
+                return sb.toString()
+            }
+        } catch (_: Exception) {
+        }
+        return null
+    }
+
+    companion object {
+        val PACKAGES = arrayOf("com.dts.freefireth", "com.dts.freefiremax")
+    }
+}
